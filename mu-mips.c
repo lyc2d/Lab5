@@ -26,7 +26,6 @@ int MEM_stall = 0;
 int IF_stall = 0;
 uint32_t stallInstruction = 0;
 
-//MISS_FLAG = 0;
 /***************************************************************/
 /* Print out a list of commands available                                                                  */
 /***************************************************************/
@@ -98,11 +97,13 @@ uint32_t cache_read_32(uint32_t addr)
 	uint32_t tag = (addr & 0xFFFFFF00) >> 8;
 	uint32_t offsetW = (addr & 0x0000000C) >> 2;
 	
-
-	if (L1Cache.blocks[index].tag != tag || L1Cache.blocks[index].valid != 1)
+//cache miss 
+	if (L1Cache.blocks[index].tag != tag || L1Cache.blocks[index].valid != 1)// the tag field and tag bits don’t match, or the valid bit is 0
 	{
 		L1Cache.blocks[index].tag = tag;
-		L1Cache.blocks[index].words[0] = mem_read_32((addr & 0xFFFFFFF0));
+		//each cache block contains 4 words
+		//called mem_read_32 4 times with adequate addresses
+		L1Cache.blocks[index].words[0] = mem_read_32((addr & 0xFFFFFFF0));// read from memory
 		L1Cache.blocks[index].words[1] = mem_read_32((addr & 0xFFFFFFF0) + 0x04);
 		L1Cache.blocks[index].words[2] = mem_read_32((addr & 0xFFFFFFF0) + 0x08);
 		L1Cache.blocks[index].words[3] = mem_read_32((addr & 0xFFFFFFF0) + 0x0C);
@@ -125,10 +126,11 @@ void cache_write_32(uint32_t addr, uint32_t new)
 	uint32_t offsetW = (addr & 0x0000000C) >> 2;
 	uint32_t data;
 	uint32_t instruction = (MEM_WB.IR & 0xFC000000) >> 26;
-	if (L1Cache.blocks[index].tag != tag || L1Cache.blocks[index].valid != 1)
+	if (L1Cache.blocks[index].tag != tag || L1Cache.blocks[index].valid != 1)//the tag field and tag bits don’t match, or the valid bit is 0
 	{
 		L1Cache.blocks[index].tag = tag;
-		L1Cache.blocks[index].words[0] = mem_read_32((addr & 0xFFFFFFF0));
+		//called mem_read_32 4 times with adequate addresses
+		L1Cache.blocks[index].words[0] = mem_read_32((addr & 0xFFFFFFF0));// read from memory
 		L1Cache.blocks[index].words[1] = mem_read_32((addr & 0xFFFFFFF0) + 0x04);
 		L1Cache.blocks[index].words[2] = mem_read_32((addr & 0xFFFFFFF0) + 0x08);
 		L1Cache.blocks[index].words[3] = mem_read_32((addr & 0xFFFFFFF0) + 0x0C);
@@ -144,11 +146,11 @@ void cache_write_32(uint32_t addr, uint32_t new)
 	switch (instruction) // store instruction
 	{
 	case 0x28: //store byte SB
-		data = L1Cache.blocks[index].words[offsetW];
+		data = L1Cache.blocks[index].words[offsetW];//update the required word of the given block
 		data = (data & 0xFFFFFF00) | (new & 0x000000FF);
 		break;
 	case 0x29: //SH
-		data = L1Cache.blocks[index].words[offsetW];
+		data = L1Cache.blocks[index].words[offsetW];// update the required word of the given block
 		data = (data & 0xFFFF0000) | (new & 0x0000FFFF);
 		break;
 	case 0x2B: //SW
@@ -158,7 +160,7 @@ void cache_write_32(uint32_t addr, uint32_t new)
 		data = 0x00;
 		break;
 	}
-	L1Cache.blocks[index].words[offsetW] = data;
+	L1Cache.blocks[index].words[offsetW] = data;//the whole block (that contains new data)should be placed in write buffer
 
 	// offset and store all those word
 	mem_write_32((addr & 0xFFFFFFF0), L1Cache.blocks[index].words[0]);
@@ -182,13 +184,11 @@ void cycle()
 /***************************************************************/
 void run(int num_cycles)
 {
-
 	if (RUN_FLAG == FALSE)
 	{
 		printf("Simulation Stopped\n\n");
 		return;
 	}
-
 	printf("Running simulator for %d cycles...\n\n", num_cycles);
 	int i,j=1;
 	for (i = 0; i < num_cycles; i++)
@@ -199,22 +199,17 @@ void run(int num_cycles)
 			{
 				j++;
 				CYCLE_COUNT++;
-
 			}
 			else
-			{
-				
-				MISS_FLAG = 0;
-				
-			}
-			
+			{				
+				MISS_FLAG = 0;				
+			}			
 		}
 		else
             if (RUN_FLAG == FALSE) {
                 printf("Simulation Stopped.\n\n");
                 break;
-                    }
-		
+                    }		
 		cycle();
 	}
 }
