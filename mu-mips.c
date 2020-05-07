@@ -109,11 +109,12 @@ uint32_t cache_read_32(uint32_t addr)
 		L1Cache.blocks[index].words[3] = mem_read_32((addr & 0xFFFFFFF0) + 0x0C);
 		L1Cache.blocks[index].valid = 1;
 		MISS_FLAG = 1;
-		cache_hits++;
+		cache_misses++;
 	}
+		
 	else
 	{
-		cache_misses++;
+		cache_hits++;
 	}
 
 	return L1Cache.blocks[index].words[offsetW];
@@ -136,11 +137,11 @@ void cache_write_32(uint32_t addr, uint32_t new)
 		L1Cache.blocks[index].words[3] = mem_read_32((addr & 0xFFFFFFF0) + 0x0C);
 		L1Cache.blocks[index].valid = 1;
 		MISS_FLAG = 1;
-		cache_hits++;
+		cache_misses++;
 	}
 	else
 	{
-		cache_misses++;
+		cache_hits++;
 	}
 
 	switch (instruction) // store instruction
