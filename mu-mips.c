@@ -132,7 +132,7 @@ void cache_write_32(uint32_t addr, uint32_t new)
 		L1Cache.blocks[index].tag = tag;
 		//called mem_read_32 4 times with adequate addresses
 		L1Cache.blocks[index].words[0] = mem_read_32((addr & 0xFFFFFFF0));// read from memory
-		L1Cache.blocks[index].words[1] = mem_read_32((addr & 0xFFFFFFF0) + 0x04);
+		L1Cache.blocks[index].words[1] = mem_read_32((addr & 0xFFFFFFF0) + 0x04);//content of this cache block will be replaced with the block
 		L1Cache.blocks[index].words[2] = mem_read_32((addr & 0xFFFFFFF0) + 0x08);
 		L1Cache.blocks[index].words[3] = mem_read_32((addr & 0xFFFFFFF0) + 0x0C);
 		L1Cache.blocks[index].valid = 1;
@@ -147,11 +147,11 @@ void cache_write_32(uint32_t addr, uint32_t new)
 	switch (instruction) // store instruction
 	{
 	case 0x28: //store byte SB
-		data = L1Cache.blocks[index].words[offsetW];//update the required word of the given block
+		data = L1Cache.blocks[index].words[offsetW];// read the whole block from memory, update the required word of the given block
 		data = (data & 0xFFFFFF00) | (new & 0x000000FF);
 		break;
 	case 0x29: //SH
-		data = L1Cache.blocks[index].words[offsetW];// update the required word of the given block
+		data = L1Cache.blocks[index].words[offsetW];// read from memory, update the required word of the given block
 		data = (data & 0xFFFF0000) | (new & 0x0000FFFF);
 		break;
 	case 0x2B: //SW
@@ -161,7 +161,7 @@ void cache_write_32(uint32_t addr, uint32_t new)
 		data = 0x00;
 		break;
 	}
-	L1Cache.blocks[index].words[offsetW] = data;//the whole block (that contains new data)should be placed in write buffer
+	L1Cache.blocks[index].words[offsetW] = data;//the whole block that contains new data should be placed in write buffer
 
 	// offset and store all those word
 	mem_write_32((addr & 0xFFFFFFF0), L1Cache.blocks[index].words[0]);
